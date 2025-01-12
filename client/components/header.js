@@ -1,58 +1,118 @@
-import { useUser } from '../api/UserContext';  // Import the custom User context
-import Router from 'next/router';  // For redirecting after sign-out
+import * as React from 'react';
+import AppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import AccountCircle from '@mui/icons-material/AccountCircle';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
+import MenuItem from '@mui/material/MenuItem';
+import Menu from '@mui/material/Menu';
+import Router from 'next/router';
+import { useUser } from '../api/UserContext';  // Import custom User context
 
-const Header = () => {
-    // Access user state and signOut function from context
-    const { user, signOut } = useUser();
+export default function header() {
+  const { user, signOut } = useUser();  // Access user state and signOut function from context
+  const [auth, setAuth] = React.useState(user !== null); // Set initial auth state based on user
+  const [anchorEl, setAnchorEl] = React.useState(null);
 
-    return (
-        <header>
-            <nav className="navbar navbar-expand-lg navbar-light bg-light">
-                <div className="container-fluid">
-                    <a className="navbar-brand" href="/">MyApp</a>
+  const handleChange = (event) => {
+    setAuth(event.target.checked);
+  };
 
-                    <div className="collapse navbar-collapse" id="navbarNav">
-                        <ul className="navbar-nav ms-auto">
-                            {/* If user is signed in, show "Sign Out", else show "Sign In" */}
-                            {user ? (
-                                <>
-                                    <li className="nav-item">
-                                        <span className="navbar-text">
-                                            Welcome, {user.email} {/* Display user email */}
-                                        </span>
-                                    </li>
-                                    <li className="nav-item">
-                                        <button 
-                                            className="btn btn-outline-danger" 
-                                            onClick={() => Router.push('/auth/signout')}>
-                                            Sign Out
-                                        </button>
-                                    </li>
-                                </>
-                            ) : (
-                                <>
-                                <li className="nav-item">
-                                    <button 
-                                        className="btn btn-outline-primary" 
-                                        onClick={() => Router.push('/auth/signin')}>
-                                        Sign In
-                                    </button>
-                                </li>
-                                <li className="nav-item">
-                                    <button 
-                                        className="btn btn-outline-primary" 
-                                        onClick={() => Router.push('/auth/signup')}>
-                                        Sign Up
-                                    </button>
-                                </li>
-                                </>
-                            )}
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-        </header>
-    );
-};
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
 
-export default Header;
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleSignOut = () => {
+    signOut();
+    Router.push('/auth/signin'); // Redirect to sign-in page after sign-out
+  };
+
+  return (
+    <Box sx={{ flexGrow: 1 }}>
+      <FormGroup>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={auth}
+              onChange={handleChange}
+              aria-label="login switch"
+            />
+          }
+          label={auth ? 'Logout' : 'Login'}
+        />
+      </FormGroup>
+      <AppBar position="static">
+        <Toolbar>
+          <IconButton
+            size="large"
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Photos
+          </Typography>
+          {user ? (
+            <div>
+              <Typography variant="body1" sx={{ mr: 2 }}>
+                Welcome, {user.email} {/* Display user email */}
+              </Typography>
+              <IconButton
+                size="large"
+                aria-label="account of current user"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
+                onClick={handleMenu}
+                color="inherit"
+              >
+                <AccountCircle />
+              </IconButton>
+              <Menu
+                id="menu-appbar"
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+              >
+                <MenuItem onClick={handleClose}>Profile</MenuItem>
+                <MenuItem onClick={handleClose}>My account</MenuItem>
+                <MenuItem onClick={handleSignOut}>Sign Out</MenuItem>
+              </Menu>
+            </div>
+          ) : (
+            <div>
+              <IconButton
+                size="large"
+                aria-label="login"
+                onClick={() => Router.push('/auth/signin')}
+                color="inherit"
+              >
+                <AccountCircle />
+              </IconButton>
+            </div>
+          )}
+        </Toolbar>
+      </AppBar>
+    </Box>
+  );
+}

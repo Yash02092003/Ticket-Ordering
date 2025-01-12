@@ -56,4 +56,4 @@ ticketSchema.statics.build = (attr : TicketAttrs) => {
 
 const Ticket = model<TicketDoc , TicketModel>('Ticket' , ticketSchema);
 
-export {Ticket};
+export {Ticket , TicketDoc};

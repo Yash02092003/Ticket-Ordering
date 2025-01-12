@@ -1,57 +1,69 @@
-import axios from "axios";
-import buildClient from "../api/build-client";
 import { useUser } from "../api/UserContext";
+import Link from "next/link";
+import buildClient from "../api/build-client";
 
-const Named = ({ currentUser }) => {
-    const { user, signOut } = useUser();
+// Named component to display tickets
+const Named = ({ currentUser, tickets }) => {
+  // Render ticket list dynamically
+  const ticketList = tickets.map((ticket) => {
     return (
-        user ? <h1>You are signed in</h1> : <h1>You are Not signed in</h1>
-    )
-}
+      <tr key={ticket.id}>
+        <td>{ticket.title}</td> {/* Correctly display title */}
+        <td>{ticket.price}</td> {/* Correctly display price */}
+        <td>
+          <Link href="/tickets/[ticketId]" as={`/tickets/${ticket.id}`}>
+            <a>View</a>
+          </Link>
+        </td>
+      </tr>
+    );
+  });
 
+  const { user, signOut } = useUser(); // Assuming this context is used for user state management
+
+  return (
+    <div>
+      <h1>Tickets</h1>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Price</th>
+            <th>Link</th>
+          </tr>
+        </thead>
+        <tbody>{ticketList}</tbody>
+      </table>
+    </div>
+  );
+};
+
+// Fetch data server-side
 export async function getServerSideProps(context) {
-    const client = buildClient(context);
-    let data = null;
-  
-    try {
-      const response = await client.get("/api/users/currentuser");
-      data = response.data; // This will be null or an empty object after sign-out
-    } catch (error) {
-      // If no user is signed in, the data will be null
-      data = null;
-    }
-  
-    return {
-      props: { currentUser: data },  // Send the currentUser as null after sign-out
-    };
-    return {};
+  const client = buildClient(context); // Instantiate your client
+
+  let data = null;
+  try {
+    const response = await client.get("/api/users/currentuser");
+    data = response.data; // Fetch current user
+  } catch (error) {
+    // Handle error (user might be null if not signed in)
+    data = null;
   }
-  
 
-// Named.getInitalProps = async (context) => {
-//     // if(typeof window === 'undefined'){
-//     //     //we are on the server!
-//     //     //requests should be made to http://SERVICE_NAME.NAMESPACE.svc.cluster.local
-//     //     //NameSpace :- ingress-nginx
-//     //     //Service Name :- ingress-nginx-controller
-//     //     const { data } = await axios.get('http://ingress-nginx-controller.ingress-nginx.svc.cluster.local/api/users/currentuser' , {
-//     //         headers : req.headers
-//     //     });
+  // Fetch tickets
+  let tickets = [];
+  try {
+    const response = await client.get("/api/tickets");
+    tickets = response.data; // Fetch tickets
+  } catch (error) {
+    // Handle error (could show a fallback or empty ticket list)
+    tickets = [];
+  }
 
-//     // }
-//     // else{
-//     //     //we are on the browser!
-//     //     //requests can be made with a base url of ''
-//     //     const { data } = await axios.get('/api/users/currentuser');
-//     //     // { currentUser } is the same as currentUser : currentUser
-//     //     return data;
-//     // }
-
-//     //Getting an Instance of axios with some preConfigured properties
-//     const client = buildClient(context);
-//     const { data } = await client.get('/api/users/currentuser');
-//     return data;
-// }
-
+  return {
+    props: { currentUser: data, tickets },  // Return both currentUser and tickets
+  };
+}
 
 export default Named;
